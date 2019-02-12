@@ -1,38 +1,79 @@
 import React, { Component } from 'react';
 import './App.css';
 
-import Logger from './components/logger';
 import Wallet from './components/wallet';
 
-import web3 from './web3';
+import Web3 from 'web3';
 
-// eslint-disable-next-line
-var DEBUG = true;
-
-
+const faucet = "https://jw98dxp219.execute-api.eu-west-1.amazonaws.com/testnet/address";
+const wallet = "https://testnet.leapdao.org/wallet";
 
 class App extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {logs: []};
-
-    this.log = this.log.bind(this);
+    this.state = {
+      inited: false,
+      error: false
+    }
+    this.init = this.init.bind(this);
+    this.init();
   }
 
-  log(text) {
-    this.setState(prevState => ({
-      logs: [...prevState.logs, text]
-    }))
+  async init() {
+    const { ethereum } = window;
+    const web3 = new Web3(ethereum);
+    window.addEventListener('load', async () => {
+      try {
+        await ethereum.enable();
+        const accounts = await web3.eth.getAccounts();
+        web3.eth.defaultAccount = accounts[0];
+        const res = await fetch(faucet, {
+          method: 'post',
+          headers: {
+            "Content-type": "application/json"
+          },
+          body: JSON.stringify({
+            address: web3.eth.defaultAccount
+          })
+        });
+        if (!res.ok) {
+          throw new Error('Something went wrong');
+        }
+        this.setState({...this.state, inited: true});
+      } catch (error) {
+        this.setState({...this.state, error: true});
+      }
+    });
   }
 
   render() {
-    return (
-      <div className="App">
-        <Wallet log={this.log} web3={web3}/>
-        {DEBUG && <Logger logs={this.state.logs} />}
-      </div>
-    );
+    if (this.state.inited) {
+      window.location = wallet;
+    }
+
+    if (this.state.error) {
+      return (
+         <div className="App">
+           Ups, something went wrong!
+         </div>
+       );
+    } else {
+      return (
+        <div className="App">
+          {!this.state.inited && (
+            <div>
+              Initing
+            </div>
+          )}
+          {this.state.inited && (
+            <div>
+              Done
+            </div>
+          )}
+        </div>
+      );
+    }
   }
 }
 
