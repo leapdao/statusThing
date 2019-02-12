@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
 
-import Wallet from './components/wallet';
-
 import Web3 from 'web3';
 
 const faucet = "https://jw98dxp219.execute-api.eu-west-1.amazonaws.com/testnet/address";
